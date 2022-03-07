@@ -1,0 +1,59 @@
+#!/bin/bash
+
+# Set your paths below. Script can be run from any folder as long as your the right user and the drive is mounted.
+# You can either include or exclude the database, incase you have mysql or simply don't want to backup a big file.
+# Do check the storage on your drive.
+
+BACKUP_FOLDER=/home/homeassistant/backups/
+BACKUP_NAME=hass-backup_$(date +"%Y%m%d_%H%M%S").zip
+BACKUP_FILE=${BACKUP_FOLDER}${BACKUP_NAME}
+BACKUP_LOCATION=/home/homeassistant/.homeassistant
+INCLUDE_DB=false
+DAYSTOKEEP=10 # Set to 0 to keep it forever.
+DROPBOX_UPLOADER=/home/homeassistant/Apps/Dropbox-Uploader/dropbox_uploader.sh
+
+log() {
+        if [ "${DEBUG}" == "true" ] || [ "${1}" != "d" ]; then
+                echo "[${1}] ${2}"
+                if [ "${3}" != "" ]; then
+                        exit ${3}
+                fi
+        fi
+}
+
+if [ -d "${BACKUP_FOLDER}" ]; then
+        if [ ! -d "${BACKUP_LOCATION}" ]; then
+                log e "Homeassistant folder not found, is it correct?" 1
+        fi
+        pushd ${BACKUP_LOCATION} >/dev/null
+        if [ "${INCLUDE_DB}" = true ] ; then
+                log i "Creating backup with database"
+                zip -9 -q -r ${BACKUP_FILE} . -x"components/*" -x"deps/*" -x"home-assistant.log"
+               ${DROPBOX_UPLOADER} upload ${BACKUP_FILE} ${BACKUP_NAME} #dropbox_uploader.sh symlinked to ~/bin/dropbox_uploader
+        else
+                log i "Creating backup"
+                zip -9 -q -r ${BACKUP_FILE} . -x@"/home/homeassistant/.homeassistant/backup-exclude.txt"
+                ${DROPBOX_UPLOADER} upload ${BACKUP_FILE} ${BACKUP_NAME} #dropbox_uploader.sh symlinked to ~/bin/dropbox_uploader
+        fi
+
+        popd >/dev/null
+
+        log i "Backup complete: ${BACKUP_FILE}"
+        if [ "${DAYSTOKEEP}" = 0 ] ; then
+                log i "Keeping all files no prunning set"
+        else
+                pushd ${BACKUP_FOLDER} >/dev/null
+                log i "Deleting backups older then ${DAYSTOKEEP} day(s)"
+                OLDFILES=$(find . -mindepth 1 -mtime +${DAYSTOKEEP} -print)
+                if [ ! -z "${OLDFILES}" ] ; then
+                        for f in ${OLDFILES}; do 
+                        log i "Deleting ${f} .."
+                        rm ${f}
+                        ${DROPBOX_UPLOADER} delete ${f:1}
+                        done
+                fi
+                popd >/dev/null
+        fi
+else
+        log e "Backup folder not found, is your USB drive mounted?" 1
+fi

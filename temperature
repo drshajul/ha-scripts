@@ -1,0 +1,3 @@
+#!/usr/bin/bash
+strZ=$(cat /sys/class/thermal/thermal_zone*/temp)
+echo ${strZ:0:2}.${strZ:3:1}
