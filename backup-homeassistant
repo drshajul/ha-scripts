@@ -10,7 +10,8 @@ BACKUP_FILE=${BACKUP_FOLDER}${BACKUP_NAME}
 BACKUP_LOCATION=/home/homeassistant/.homeassistant
 INCLUDE_DB=false
 DAYSTOKEEP=10 # Set to 0 to keep it forever.
-DROPBOX_UPLOADER=/home/homeassistant/Apps/Dropbox-Uploader/dropbox_uploader.sh
+DROPBOX_UPLOADER=/home/homeassistant/bin/dropbox_uploader.sh
+EXCLUSIONS_TXT=/home/homeassistant/.homeassistant/exclusions.txt
 
 if [ -d "${BACKUP_FOLDER}" ]; then
         mkdir -p ${BACKUP_FOLDER}
@@ -36,7 +37,7 @@ if [ -d "${BACKUP_FOLDER}" ]; then
                ${DROPBOX_UPLOADER} upload ${BACKUP_FILE} ${BACKUP_NAME} #dropbox_uploader.sh symlinked to ~/bin/dropbox_uploader
         else
                 log i "Creating backup"
-                zip -9 -q -r ${BACKUP_FILE} . -x@"/home/homeassistant/.homeassistant/backup-exclude.txt"
+                zip -9 -q -r ${BACKUP_FILE} . -x@"${EXCLUSIONS_TXT}"
                 ${DROPBOX_UPLOADER} upload ${BACKUP_FILE} ${BACKUP_NAME} #dropbox_uploader.sh symlinked to ~/bin/dropbox_uploader
         fi
 
