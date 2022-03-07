@@ -12,6 +12,10 @@ INCLUDE_DB=false
 DAYSTOKEEP=10 # Set to 0 to keep it forever.
 DROPBOX_UPLOADER=/home/homeassistant/Apps/Dropbox-Uploader/dropbox_uploader.sh
 
+if [ -d "${BACKUP_FOLDER}" ]; then
+        mkdir -p ${BACKUP_FOLDER}
+fi
+
 log() {
         if [ "${DEBUG}" == "true" ] || [ "${1}" != "d" ]; then
                 echo "[${1}] ${2}"
